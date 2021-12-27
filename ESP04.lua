@@ -18,16 +18,54 @@ gpio.mode(BUT_PIN2, gpio.INPUT)
 gpio.mode(BUT_PIN3, gpio.INPUT)
 gpio.mode(BUT_PIN4, gpio.INPUT)
 
-gpio.write(REL_PIN1,gpio.HIGH)
-gpio.write(REL_PIN2,gpio.HIGH)
-gpio.write(REL_PIN3,gpio.HIGH)
-gpio.write(REL_PIN4,gpio.HIGH)
+if file.open("R1.txt", "r") then
+    if(file.read() == '1') then
+        RelState_old1 = 0
+    else 
+        RelState_old1 = 1
+    end
+    file.close()
+end
+if file.open("R2.txt", "r") then
+    if(file.read() == '1') then
+        RelState_old2 = 0
+    else 
+        RelState_old2 = 1
+    end
+    file.close()
+end
+if file.open("R3.txt", "r") then
+    if(file.read() == '1') then
+        RelState_old3 = 0
+    else 
+        RelState_old3 = 1
+    end
+    file.close()
+end
+if file.open("R4.txt", "r") then
+    if(file.read() == '1') then
+        RelState_old4 = 0
+    else 
+        RelState_old4 = 1
+    end
+    file.close()
+end
+print(RelState_old1..RelState_old2..RelState_old3..RelState_old4)
+
+gpio.write(REL_PIN1,RelState_old1)
+gpio.write(REL_PIN2,RelState_old2)
+gpio.write(REL_PIN3,RelState_old3)
+gpio.write(REL_PIN4,RelState_old4)
 
 ButtonState_old1 = 0
 ButtonState_old2 = 0
 ButtonState_old3 = 0
 ButtonState_old4 = 0
 
+RState_old1 = RelState_old1
+RState_old2 = RelState_old2
+RState_old3 = RelState_old3
+RState_old4 = RelState_old4
 
 MQTT_BrokerIP = "192.168.43.254"
 MQTT_BrokerPort = 1883
@@ -42,11 +80,6 @@ wifi.sta.config(station_cfg)
 wifi.sta.connect()
 print(wifi.sta.getip())
 wifi.sta.autoconnect(1)
-
-RelState_old1 = 1
-RelState_old2 = 1
-RelState_old3 = 1
-RelState_old4 = 1
 
 mqttFlag = 0
 cnt = 0
@@ -121,14 +154,56 @@ timerR4:register(100, tmr.ALARM_AUTO, function ()
 end)
 timerR4:start()
 ------------------------------------------------------------------------------
+save = tmr.create()
+save:register(5000, tmr.ALARM_AUTO, function ()
+    local RelState1 = gpio.read(REL_PIN1)
+    if (RelState1 ~= RState_old1) then
+        if file.open("R1.txt", "w+") then
+            file.write(tostring(RState_old1))
+            file.close()
+        end
+        RState_old1 = RelState1
+    end
+
+    local RelState2 = gpio.read(REL_PIN2)
+    if (RelState2 ~= RState_old2) then
+        if file.open("R2.txt", "w+") then
+            file.write(tostring(RState_old2))
+            file.close()
+        end
+        RState_old2 = RelState2
+    end
+
+    local RelState3 = gpio.read(REL_PIN3)
+    if (RelState3 ~= RState_old3) then
+        if file.open("R3.txt", "w+") then
+            file.write(tostring(RState_old3))
+            file.close()
+        end
+        RState_old3 = RelState3
+    end
+
+    local RelState4 = gpio.read(REL_PIN4)
+    if (RelState4 ~= RState_old4) then
+        if file.open("R4.txt", "w+") then
+            file.write(tostring(RState_old4))
+            file.close()
+        end
+        RState_old4 = RelState4
+    end
+    print(RState_old1..RState_old2..RState_old3..RState_old4)
+end)
+save:start()
+------------------------------------------------------------------------------
 
 mytimer = tmr.create()
-mytimer:register(1000, tmr.ALARM_AUTO, function ()
+mytimer:register(13000, tmr.ALARM_AUTO, function ()
 if mqttFlag == 0 then   -- если нет подключения к брокеру
     m = mqtt.Client(MQTT_ClientID, 120, "user", "password")
     m:on("connect", function(client) print ("connected") end)
     m:on("offline", function(client)    
         print ("offline")
+		mytimer:interval(13000)
         mqttFlag = 0
     end)
     -- on publish message receive event
@@ -178,6 +253,7 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
     end)
     m:connect(MQTT_BrokerIP, MQTT_BrokerPort, 0, function(client)
       print("connected")
+      mytimer:interval(1000)
       mqttFlag = 1
       cnt = 0
       -- subscribe topic with qos = 0
@@ -192,6 +268,10 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
       mqttFlag = 0
       cnt = cnt + 1
       print("failed reason: " .. reason)
+      mytimer:interval(13000)
+      if (cnt == 25) then
+        node.restart()
+      end
     end)
     else    -- если подключен к брокеру
 -----------------------------------------------
@@ -234,22 +314,7 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
      RelState_old4 = RelState4
 end
 end)
---mytimer:start()
-Idletimer = tmr.create()
-Idletimer:register(1000, tmr.ALARM_AUTO, function ()
-    local myTimerFlag = 0
-    if wifi.sta.status() == 5 and myTimerFlag == 0 then
-        mytimer:start()
-        myTimerFlag = 1
-    end
-    if cnt > 9 then
-        mytimer:stop()
-        myTimerFlag = 0
-    end
-    if wifi.sta.status() ~= 5 then
-        cnt = 0
-    end
-end)
-Idletimer:start()
+mytimer:start()
+
 
 
