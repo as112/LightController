@@ -67,10 +67,10 @@ RState_old2 = RelState_old2
 RState_old3 = RelState_old3
 RState_old4 = RelState_old4
 
-MQTT_BrokerIP = "192.168.43.254"
+MQTT_BrokerIP = "mqtt.by"
 MQTT_BrokerPort = 1883
-MQTT_Client_user = "user"
-MQTT_Client_password = "password"
+MQTT_Client_user = "as112"
+MQTT_Client_password = "etmpiqgu"
 MQTT_ClientID = "esp-03"
 station_cfg={}
 station_cfg.ssid="AndroidAP"
@@ -200,52 +200,60 @@ save:start()
 mytimer = tmr.create()
 mytimer:register(12000, tmr.ALARM_AUTO, function ()
 if mqttFlag == 0 then   -- если нет подключения к брокеру
-    m = mqtt.Client(MQTT_ClientID, 120, "user", "password")
+    m = mqtt.Client(MQTT_ClientID, 120, MQTT_Client_user, MQTT_Client_password)
     m:on("connect", function(client) print ("connected") end)
     m:on("offline", function(client)    
         print ("offline")
-		mytimer:interval(12000)
+        mytimer:interval(12000)
         mqttFlag = 0
     end)
     -- on publish message receive event
     m:on("message", function(client, topic, data) 
-                if (topic == "/ESP03/R1") and (tonumber(data) == 0) then
+                if (topic == "/user/as112/ESP03/R1/") and (tonumber(data) == 0) then
                     gpio.write(REL_PIN1,gpio.HIGH)
+					m: publish("/user/as112/ESP03/R1/STATUS/",0,0,0)
                     print("R1 ВЫКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R1") and (tonumber(data) == 1) then
+                if (topic == "/user/as112/ESP03/R1/") and (tonumber(data) == 1) then
                     gpio.write(REL_PIN1,gpio.LOW)
+					m: publish("/user/as112/ESP03/R1/STATUS/",1,0,0)
                     print("R1 ВКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R2") and (tonumber(data) == 0) then
+                if (topic == "/user/as112/ESP03/R2/") and (tonumber(data) == 0) then
                     gpio.write(REL_PIN2,gpio.HIGH)
+					m: publish("/user/as112/ESP03/R2/STATUS/",0,0,0)
                     print("R2 ВЫКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R2") and (tonumber(data) == 1) then
+                if (topic == "/user/as112/ESP03/R2/") and (tonumber(data) == 1) then
                     gpio.write(REL_PIN2,gpio.LOW)
+					m: publish("/user/as112/ESP03/R2/STATUS/",1,0,0)
                     print("R2 ВКЛ сверху")
                 end
 
-                if (topic == "/ESP03/R3") and (tonumber(data) == 0) then
+                if (topic == "/user/as112/ESP03/R3/") and (tonumber(data) == 0) then
                     gpio.write(REL_PIN3,gpio.HIGH)
+					m: publish("/user/as112/ESP03/R3/STATUS/",0,0,0)
                     print("R3 ВЫКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R3") and (tonumber(data) == 1) then
+                if (topic == "/user/as112/ESP03/R3/") and (tonumber(data) == 1) then
                     gpio.write(REL_PIN3,gpio.LOW)
+					m: publish("/user/as112/ESP03/R3/STATUS/",1,0,0)
                     print("R3 ВКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R4") and (tonumber(data) == 0) then
+                if (topic == "/user/as112/ESP03/R4/") and (tonumber(data) == 0) then
                     gpio.write(REL_PIN4,gpio.HIGH)
+					m: publish("/user/as112/ESP03/R4/STATUS/",0,0,0)
                     print("R4 ВЫКЛ сверху")
                 end
                 
-                if (topic == "/ESP03/R4") and (tonumber(data) == 1) then
+                if (topic == "/user/as112/ESP03/R4/") and (tonumber(data) == 1) then
                     gpio.write(REL_PIN4,gpio.LOW)
+					m: publish("/user/as112/ESP03/R4/STATUS/",1,0,0)
                     print("R4 ВКЛ сверху")
                 end
                 end)
@@ -258,18 +266,18 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
       mqttFlag = 1
       cnt = 0
       -- subscribe topic with qos = 0
-      client:subscribe({["/ESP03/R1"]=0,
-                        ["/ESP03/R2"]=0,
-                        ["/ESP03/R3"]=0,
-                        ["/ESP03/R4"]=0,}, function(client) print("subscribe success") end)
+      client:subscribe({["/user/as112/ESP03/R1/"]=0,
+                        ["/user/as112/ESP03/R2/"]=0,
+                        ["/user/as112/ESP03/R3/"]=0,
+                        ["/user/as112/ESP03/R4/"]=0,}, function(client) print("subscribe success") end)
       -- publish a message with data = hello, QoS = 0, retain = 0
       -- client:publish("/ESP03/", "hello", 0, 0, function(client) print("ESP03 на связи") end)
     end,
     function(client, reason)
+      mytimer:interval(12000)
       mqttFlag = 0
       cnt = cnt + 1
       print("failed reason: " .. reason)
-      mytimer:interval(12000)
       if (cnt == 25) then
         node.restart()
       end
@@ -278,39 +286,39 @@ else    -- если подключен к брокеру
 -----------------------------------------------
     local RelState1 = gpio.read(REL_PIN1)
     if (RelState1 == 1) and (RelState_old1 == 0) then
-             m: publish("/ESP03/R1",0,0,0)
+             m: publish("/user/as112/ESP03/R1/STATUS/",0,0,0)
      end
 
      if (RelState1 == 0) and (RelState_old1 == 1) then
-             m: publish("/ESP03/R1",1,0,0)
+             m: publish("/user/as112/ESP03/R1/STATUS/",1,0,0)
      end
      RelState_old1 = RelState1
 ---------------------------------------------
     local RelState2 = gpio.read(REL_PIN2)
     if (RelState2 == 1) and (RelState_old2 == 0) then
-             m: publish("/ESP03/R2",0,0,0)
+             m: publish("/user/as112/ESP03/R2/STATUS/",0,0,0)
      end
 
      if (RelState2 == 0) and (RelState_old2 == 1) then
-             m: publish("/ESP03/R2",1,0,0)
+             m: publish("/user/as112/ESP03/R2/STATUS/",1,0,0)
      end
      RelState_old2 = RelState2
 ---------------------------------------------
     local RelState3 = gpio.read(REL_PIN3)
     if (RelState3 == 1) and (RelState_old3 == 0) then
-             m: publish("/ESP03/R3",0,0,0)
+             m: publish("/user/as112/ESP03/R3/STATUS/",0,0,0)
      end
      if (RelState3 == 0) and (RelState_old3 == 1) then
-             m: publish("/ESP03/R3",1,0,0)
+             m: publish("/user/as112/ESP03/R3/STATUS/",1,0,0)
      end
      RelState_old3 = RelState3
 -----------------------------------------------------
     local RelState4 = gpio.read(REL_PIN4)
     if (RelState4 == 1) and (RelState_old4 == 0) then
-             m: publish("/ESP03/R4",0,0,0)
+             m: publish("/user/as112/ESP03/R4/STATUS/",0,0,0)
      end
      if (RelState4 == 0) and (RelState_old4 == 1) then
-             m: publish("/ESP03/R4",1,0,0)
+             m: publish("/user/as112/ESP03/R4/STATUS/",1,0,0)
      end
      RelState_old4 = RelState4
 end

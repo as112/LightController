@@ -1,7 +1,7 @@
-MQTT_BrokerIP = "192.168.43.254"
+MQTT_BrokerIP = "mqtt.by"
 MQTT_BrokerPort = 1883
---MQTT_Client_user = "user"
---MQTT_Client_password = "password"
+MQTT_Client_user = "as112"
+MQTT_Client_password = "etmpiqgu"
 MQTT_ClientID = "esp-010"
 station_cfg={}
 station_cfg.ssid="AndroidAP"
@@ -24,9 +24,9 @@ uart.on("data", 'W', function(data)
 end, 0)
 -------------------------------------------------------------
 mytimer = tmr.create()
-mytimer:register(15000, tmr.ALARM_AUTO, function ()
+mytimer:register(25000, tmr.ALARM_AUTO, function ()
 if mqttFlag == 0 then   -- если нет подключения к брокеру
-    m = mqtt.Client(MQTT_ClientID, 120, "user", "password")
+    m = mqtt.Client(MQTT_ClientID, 120, MQTT_Client_user, MQTT_Client_password)
     m:on("connect", function(client) print ("connected") end)
     m:on("offline", function(client)    print ("offline")
                                         mqttFlag = 0
@@ -47,7 +47,7 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
       -- subscribe topic with qos = 0
       client:subscribe("/KOTEL/STOP/", 0, function(client) print("subscribe success") end)
       -- publish a message with data = hello, QoS = 0, retain = 0
-      client:publish("/KOTEL/", "hello", 0, 0, function(client) print("котел на связи") end)
+      client:publish("/user/as112/KOTEL/", "hello", 0, 0, function(client) print("котел на связи") end)
     end,
     function(client, reason)
       print("failed reason: " .. reason)
@@ -63,36 +63,29 @@ if mqttFlag == 0 then   -- если нет подключения к броке�
 	flagFuel = string.sub(RxBuf, 34, 36)
     
     if (Pod ~= nil) then
-       m: publish("/KOTEL/Pod/",Pod,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Pod/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Pod/",Pod,0,0,function(client) print("sent") end)
      end
     if (Obr ~= nil) then
-       m: publish("/KOTEL/Obr/",Obr,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Obr/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Obr/",Obr,0,0,function(client) print("sent") end)
      end     
     if (Riser ~= nil) then
-       m: publish("/KOTEL/Riser/",Riser,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Riser/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Riser/",Riser,0,0,function(client) print("sent") end)
      end
     if (Bunker ~= nil) then
-       m: publish("/KOTEL/Bunker/",Bunker,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Bunker/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Bunker/",Bunker,0,0,function(client) print("sent") end)
      end  
     if (Rashod ~= nil) then
-       m: publish("/KOTEL/Rashod/",Rashod,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Bunker/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Rashod/",Rashod,0,0,function(client) print("sent") end)
     end 
     if (Power ~= nil) then
-       m: publish("/KOTEL/Power/",Power,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Bunker/",0,0,0,function(client) print("sent") end)
+       m: publish("/user/as112/KOTEL/Power/",Power,0,0,function(client) print("sent") end)
     end
-    if (time ~= nil) then
-       m: publish("/KOTEL/time/",time,0,0,function(client) print("sent") end)
-     --else m: publish("/KOTEL/Bunker/",0,0,0,function(client) print("sent") end)
-    end
+    --if (time ~= nil) then
+    --   m: publish("/user/as112/KOTEL/time/",time,0,0,function(client) print("sent") end)
+    --end
 	if (flagFuel == "SOS") then
         if (cnt == 0) or (cnt % 40 == 0) then
-            m: publish("/KOTEL/","SOS",0,0,function(client) print("sent") end)
+            m: publish("/user/as112/KOTEL/","SOS",0,0,function(client) print("sent") end)
         end
         cnt = cnt + 1
         if cnt == 100 then cnt = 0 end
